@@ -49,10 +49,12 @@ defmodule ExAws.Auth do
     end
   end
 
-  def presigned_url(http_method, url, service, datetime, config, expires, query_params \\ []) do
+  def presigned_url(http_method, url, service, datetime, config, expires, opts \\ []) do
     with {:ok, config} <- validate_config(config) do
+      query_params = Keyword.get(opts, :query_params, [])
+      headers = Keyword.get(opts, :headers, [])
       service = service_name(service)
-      headers = presigned_url_headers(url)
+      headers = presigned_url_headers(url) ++ headers
 
       org_query_params = query_params |> Enum.map(fn({k, v}) -> {to_string(k), v} end)
       amz_query_params = build_amz_query_params(service, datetime, config, expires)

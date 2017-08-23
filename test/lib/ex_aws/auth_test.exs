@@ -50,7 +50,7 @@ defmodule ExAws.AuthTest do
     datetime = {{2013, 5, 24}, {0, 0, 0}}
     expires = 86400
     query_params = [partNumber: 1, uploadId: "sample.upload.id"]
-    actual = ExAws.Auth.presigned_url(http_method, url, service, datetime, @config, expires, query_params)
+    actual = ExAws.Auth.presigned_url(http_method, url, service, datetime, @config, expires, query_params: query_params)
 
     expected =
       "https://examplebucket.s3.amazonaws.com/test.txt" <>
