@@ -57,7 +57,7 @@ defmodule ExAws.Auth do
       headers = presigned_url_headers(url) ++ headers
 
       org_query_params = query_params |> Enum.map(fn({k, v}) -> {to_string(k), v} end)
-      amz_query_params = build_amz_query_params(service, datetime, config, expires)
+      amz_query_params = build_amz_query_params(service, datetime, config, expires, headers)
       [org_query, amz_query] = [org_query_params, amz_query_params] |> Enum.map(&canonical_query_params/1)
       query_to_sign = org_query_params ++ amz_query_params |> canonical_query_params
       query_for_url = if Enum.any?(org_query_params), do: org_query <> "&" <> amz_query, else: amz_query
@@ -195,13 +195,13 @@ defmodule ExAws.Auth do
     [{"host", uri.authority}]
   end
 
-  defp build_amz_query_params(service, datetime, config, expires) do
+  defp build_amz_query_params(service, datetime, config, expires, headers) do
     [
       {"X-Amz-Algorithm",     "AWS4-HMAC-SHA256"},
       {"X-Amz-Credential",    Credentials.generate_credential_v4(service, config, datetime)},
       {"X-Amz-Date",          amz_date(datetime)},
       {"X-Amz-Expires",       expires},
-      {"X-Amz-SignedHeaders", "host"},
+      {"X-Amz-SignedHeaders", headers |> Enum.map(&elem(&1, 0)) |> Enum.join(";")},
     ] ++
     if config[:security_token] do
       [{"X-Amz-Security-Token", config[:security_token]}]
