@@ -74,8 +74,11 @@ defmodule ExAws.Auth do
       service = service_name(service)
       headers = presigned_url_headers(url) ++ headers
 
-      query_for_url =
-        if Enum.any?(org_query_params), do: org_query <> "&" <> amz_query, else: amz_query
+      org_query_params = query_params |> Enum.map(fn({k, v}) -> {to_string(k), v} end)
+      amz_query_params = build_amz_query_params(service, datetime, config, expires, headers)
+      [org_query, amz_query] = [org_query_params, amz_query_params] |> Enum.map(&canonical_query_params/1)
+      query_to_sign = org_query_params ++ amz_query_params |> canonical_query_params
+      query_for_url = if Enum.any?(org_query_params), do: org_query <> "&" <> amz_query, else: amz_query
 
       uri = URI.parse(url)
 
@@ -253,13 +256,13 @@ defmodule ExAws.Auth do
     canonical_headers([{"host", uri.authority} | headers])
   end
 
-  defp build_amz_query_params(service, datetime, config, expires, signed_headers) do
+  defp build_amz_query_params(service, datetime, config, expires, headers) do
     [
-      {"X-Amz-Algorithm", "AWS4-HMAC-SHA256"},
-      {"X-Amz-Credential", Credentials.generate_credential_v4(service, config, datetime)},
-      {"X-Amz-Date", amz_date(datetime)},
-      {"X-Amz-Expires", expires},
-      {"X-Amz-SignedHeaders", Keyword.keys(signed_headers) |> Enum.join(";")}
+      {"X-Amz-Algorithm",     "AWS4-HMAC-SHA256"},
+      {"X-Amz-Credential",    Credentials.generate_credential_v4(service, config, datetime)},
+      {"X-Amz-Date",          amz_date(datetime)},
+      {"X-Amz-Expires",       expires},
+      {"X-Amz-SignedHeaders", headers |> Enum.map(&elem(&1, 0)) |> Enum.join(";")},
     ] ++
       if config[:security_token] do
         [{"X-Amz-Security-Token", config[:security_token]}]
