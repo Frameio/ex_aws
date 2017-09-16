@@ -572,7 +572,8 @@ defmodule ExAws.Dynamo do
     case Map.fetch(opts, key) do
       :error     -> data
       {:ok, nil} -> data
-      {:ok, v}   -> Map.put(data, key, v |> upcase)
+      {:ok, v} when is_binary(v)  -> Map.put(data, key, v |> upcase)
+      {:ok, v} -> Map.put(data, key, v)
     end
   end
 
