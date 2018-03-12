@@ -378,9 +378,9 @@ defmodule ExAws.S3 do
   end
 
   @doc "Delete a version of an object in bucket"
-  @spec delete_version(bucket :: binary, object :: binary, version :: binary)
-  def delete_version(bucket, object, version, opts \\ [])
-    request(:delete, bucket, object, params: %{"versionId" => version}, headers: Map.new(opts))
+  @spec delete_version(bucket :: binary, object :: binary, version :: binary) :: ExAws.Operation.S3.t
+  def delete_version(bucket, object, version, opts \\ []) do
+    request(:delete, bucket, object, [params: %{"versionId" => version}, headers: Map.new(opts)])
   end
 
   @doc """
@@ -658,20 +658,30 @@ defmodule ExAws.S3 do
     request(:put, bucket, object, headers: headers, resource: "acl")
   end
 
+  @doc "Puts a list of tags on an object"
+  @spec put_object_tagging(bucket :: binary, object :: binary, tags :: list) :: ExAws.Operation.S3.t
   def put_object_tagging(bucket, object, tags, opts \\ []) do
-    tags = Enum.map(tags, fn {tag, value} -> ["<Tag>", "<Key>#{tag}</Key>", "<Value>#{value}</Value>", "</Tag>"])
-    tag_request = ["<Tagging>", "<TagSet>"] ++ tags ++ ["</TagSet", "</Tagging>"]
-    content_md5 = :crypto.hash(:md5, tag_request) |> Base.encode64
-    body_binary = body |> IO.iodata_to_binary
-    request(:put, bucket, object, body: body_binary, headers: Map.new(opts), resource: "tagging")
+    tags = 
+      tags
+      |> Enum.map(fn {tag, value} -> ["<Tag>", "<Key>#{tag}</Key>", "<Value>#{value}</Value>", "</Tag>"] end)
+      |> Enum.concat()
+
+    tag_request = [~s(<?xml version="1.0" encoding="UTF-8"?>), "<Tagging>", "<TagSet>"] ++ tags ++ ["</TagSet>", "</Tagging>"]
+    content_md5 = :crypto.hash(:md5, tag_request) |> Base.encode64()
+    body_binary = tag_request |> IO.iodata_to_binary()
+    request(:put, bucket, object, [body: body_binary, headers: Enum.into(opts, %{"content-md5" => content_md5}), resource: "tagging"])
   end
 
+  @doc "Deletes all tags on an object"
+  @spec delete_object_tagging(bucket :: binary, object :: binary) :: ExAws.Operation.S3.t
   def delete_object_tagging(bucket, object, opts \\ []) do
-    request(:delete, bucket, object, headers: Map.new(opts), resource: "tagging")
+    request(:delete, bucket, object, [headers: Map.new(opts), resource: "tagging"])
   end
 
+  @doc "Gets all tags on an object"
+  @spec get_object_tagging(bucket :: binary, object :: binary) :: ExAws.Operation.S3.t
   def get_object_tagging(bucket, object, opts \\ []) do
-    request(:get, bucket, object, headers: Map.new(opts), resource: "tagging")
+    request(:get, bucket, object, [headers: Map.new(opts), resource: "tagging"])
   end
 
   @type pub_object_copy_opts :: [
