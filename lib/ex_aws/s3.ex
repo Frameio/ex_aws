@@ -670,6 +670,10 @@ defmodule ExAws.S3 do
     request(:delete, bucket, object, headers: Map.new(opts), resource: "tagging")
   end
 
+  def get_object_tagging(bucket, object, opts \\ []) do
+    request(:get, bucket, object, headers: Map.new(opts), resource: "tagging")
+  end
+
   @type pub_object_copy_opts :: [
     {:metadata_directive, :COPY | :REPLACE}
     | {:copy_source_if_modified_since, binary}
