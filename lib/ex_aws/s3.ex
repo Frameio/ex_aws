@@ -377,6 +377,12 @@ defmodule ExAws.S3 do
     request(:delete, bucket, object, headers: opts |> Map.new)
   end
 
+  @doc "Delete a version of an object in bucket"
+  @spec delete_version(bucket :: binary, object :: binary, version :: binary)
+  def delete_version(bucket, object, version, opts \\ [])
+    request(:delete, bucket, object, params: %{"versionId" => version}, headers: Map.new(opts))
+  end
+
   @doc """
   Delete multiple objects within a bucket
 
