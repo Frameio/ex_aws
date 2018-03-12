@@ -658,6 +658,18 @@ defmodule ExAws.S3 do
     request(:put, bucket, object, headers: headers, resource: "acl")
   end
 
+  def put_object_tagging(bucket, object, tags, opts \\ []) do
+    tags = Enum.map(tags, fn {tag, value} -> ["<Tag>", "<Key>#{tag}</Key>", "<Value>#{value}</Value>", "</Tag>"])
+    tag_request = ["<Tagging>", "<TagSet>"] ++ tags ++ ["</TagSet", "</Tagging>"]
+    content_md5 = :crypto.hash(:md5, tag_request) |> Base.encode64
+    body_binary = body |> IO.iodata_to_binary
+    request(:put, bucket, object, body: body_binary, headers: Map.new(opts), resource: "tagging")
+  end
+
+  def delete_object_tagging(bucket, object, opts \\ []) do
+    request(:delete, bucket, object, headers: Map.new(opts), resource: "tagging")
+  end
+
   @type pub_object_copy_opts :: [
     {:metadata_directive, :COPY | :REPLACE}
     | {:copy_source_if_modified_since, binary}
