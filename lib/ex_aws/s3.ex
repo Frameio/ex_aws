@@ -622,9 +622,15 @@ defmodule ExAws.S3 do
       _ -> %{}
     end
 
+    tier = case Keyword.fetch(opts, :tier) do
+      {:ok, tier} -> "<GlacierJobParameter><Tier>#{tier}</Tier></GlacierJobParameter>"
+      _ -> ""
+    end
+
     body = """
     <RestoreRequest xmlns="http://s3.amazonaws.com/doc/2006-3-01">
       <Days>#{number_of_days}</Days>
+      #{tier}
     </RestoreRequest>
     """
     request(:post, bucket, object, resource: "restore", params: params, body: body)
@@ -661,7 +667,7 @@ defmodule ExAws.S3 do
   @doc "Puts a list of tags on an object"
   @spec put_object_tagging(bucket :: binary, object :: binary, tags :: list) :: ExAws.Operation.S3.t
   def put_object_tagging(bucket, object, tags, opts \\ []) do
-    tags = 
+    tags =
       tags
       |> Enum.map(fn {tag, value} -> ["<Tag>", "<Key>#{tag}</Key>", "<Value>#{value}</Value>", "</Tag>"] end)
       |> Enum.concat()
