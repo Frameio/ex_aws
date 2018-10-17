@@ -107,7 +107,7 @@ defmodule ExAws.Auth do
     end
   end
 
-  defp handle_temp_credentials(headers, %{security_token: token}) do
+  defp handle_temp_credentials(headers, %{security_token: token}) when not is_nil(token) do
     [{"X-Amz-Security-Token", token} | headers]
   end
 
