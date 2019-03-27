@@ -34,6 +34,12 @@ defmodule ExAws.Config.Defaults do
       region: "us-east-1",
       port: 443
     },
+    translate: %{
+      scheme: "https://",
+      host: {"$region", "translate.$region.amazonaws.com"},
+      region: "us-east-1",
+      port: 443
+    },
     dynamodb: %{
       scheme: "https://",
       host: {"$region", "dynamodb.$region.amazonaws.com"},
