@@ -54,6 +54,8 @@ defmodule ExAws.Request do
     end
   end
 
+  def client_error(%{status_code: status, body: "<ThrottlingException>" <> message}, _),
+    do: handle_aws_error("ThrottlingException", message)
   def client_error(%{status_code: status, body: body} = error, json_codec) do
     case json_codec.decode(body) do
       {:ok, %{"__type" => error_type, "message" => message} = err} ->
